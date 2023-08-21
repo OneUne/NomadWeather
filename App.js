@@ -2,9 +2,9 @@ import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
 import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
 import React, { useEffect, useState } from "react";
+import { API_KEY } from "@env";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-console.log(SCREEN_WIDTH);
 
 export default function App() {
   const [city, setCity] = useState("Loading...");
@@ -28,7 +28,15 @@ export default function App() {
       { useGoogleMaps: false }
     );
     setCity(location[0].city);
+
+    fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=kr`
+    )
+      .then((resp) => resp.json())
+      .then((data) => console.log(data))
+      .catch((err) => console.log(err));
   };
+
   useEffect(() => {
     getWeather();
   });
