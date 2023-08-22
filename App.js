@@ -10,13 +10,27 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { API_KEY } from "@env";
+import { processCurrentData, processForecastData } from "./utils/helpers";
+import {
+  useFonts,
+  BlackHanSans_400Regular,
+} from "@expo-google-fonts/black-han-sans";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function App() {
+  let [fontsLoaded, fontError] = useFonts({
+    BlackHanSans_400Regular,
+  });
+
   const [city, setCity] = useState("Loading...");
   const [days, setDays] = useState([]);
   const [ok, setOK] = useState(true);
+
+  const now = new Date();
+  // const locale = navigator.language;
+  const locale = "ko-kr";
+
   const getWeather = async () => {
     const { granted } = await Location.requestForegroundPermissionsAsync();
     if (!granted) {
@@ -36,75 +50,130 @@ export default function App() {
     );
     setCity(location[0].city);
 
+    //TODO: locale에 따른 lang 설정
     fetch(
       `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=kr`
     )
       .then((resp) => resp.json())
-      .then((data) => console.log(data))
+      .then((data) => processCurrentData(data, locale, days, setDays))
       .catch((err) => console.log(err));
   };
 
   useEffect(() => {
-    getWeather();
+    if (days.length === 0) getWeather();
   });
 
-  return (
-    <View style={styles.container}>
-      <StatusBar style="auto"></StatusBar>
-      <View style={styles.city}>
-        <Text style={styles.cityName}>{city}</Text>
+  if (!fontsLoaded && !fontError) {
+    return null;
+  } else {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="auto"></StatusBar>
+        <View style={styles.city}>
+          <Text style={styles.cityName}>{city}</Text>
+        </View>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          indicatorStyle="white"
+          // showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.weather}
+        >
+          {days.length === 0 ? (
+            <View style={styles.day}>
+              <ActivityIndicator
+                color="white"
+                size="large"
+                style={{ marginTop: 10 }}
+              />
+            </View>
+          ) : (
+            days.map((day, index) => (
+              <View key={index}>
+                <View style={styles.date}>
+                  <Text style={styles.dateDay}>{day.day}</Text>
+                  <Text style={styles.dateMD}>{day.md}</Text>
+                </View>
+                <View style={styles.horizontalLine}></View>
+                <View style={styles.day}>
+                  <Text style={styles.temp}>{day.temp}</Text>
+                  <Text style={styles.description}>{day.desc}</Text>
+                </View>
+                <View style={styles.horizontalLine}></View>
+                <View style={styles.otherInfo}>
+                  <View>
+                    <Text style={{ fontWeight: "bold" }}>
+                      {day.temp_max} ºC
+                    </Text>
+                    <Text>{day.temp_min} ºC</Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontWeight: "bold" }}>
+                      강수량 {day.rainfall} mm
+                    </Text>
+                    <Text>풍속 {day.wind_speed} m/s</Text>
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
       </View>
-      <ScrollView
-        horizontal
-        pagingEnabled
-        indicatorStyle="white"
-        // showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.weather}
-      >
-        {days.length === 0 ? (
-          <View style={styles.day}>
-            <ActivityIndicator
-              color="white"
-              size="large"
-              style={{ marginTop: 10 }}
-            />
-          </View>
-        ) : (
-          <View style={styles.day}>
-            <Text style={styles.temp}>27</Text>
-            <Text style={styles.description}>Sunny</Text>
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  );
+    );
+  }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 30,
     backgroundColor: "orange",
   },
   city: {
-    flex: 1,
+    flex: 0.3,
     justifyContent: "center",
     alignItems: "center",
   },
-  weather: {},
   cityName: {
-    fontSize: 68,
+    fontSize: 30,
+    fontFamily: "BlackHanSans_400Regular",
   },
+  date: {
+    marginBottom: 20,
+  },
+  dateDay: {
+    fontSize: 20,
+    fontWeight: "bold",
+    fontFamily: "BlackHanSans_400Regular",
+  },
+  dateMD: {
+    marginTop: 5,
+    fontSize: 20,
+    fontFamily: "BlackHanSans_400Regular",
+  },
+  weather: {},
   day: {
     flex: 1,
-    alignItems: "center",
-    width: SCREEN_WIDTH,
+    alignItems: "left", // ScrollView라서 그런지 align이 수평, justify가 수직 정렬임
+    justifyContent: "center",
+    width: SCREEN_WIDTH - 60,
   },
   temp: {
-    marginTop: 50,
-    fontSize: 168,
+    fontSize: 100,
+    fontFamily: "BlackHanSans_400Regular",
   },
   description: {
-    marginTop: -30,
     fontSize: 60,
+    fontFamily: "BlackHanSans_400Regular",
+  },
+  horizontalLine: {
+    borderBottomColor: "black",
+    borderBottomWidth: 1,
+    marginVertical: 10,
+  },
+  otherInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 30,
   },
 });
