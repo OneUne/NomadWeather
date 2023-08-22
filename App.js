@@ -1,6 +1,13 @@
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
-import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  ActivityIndicator,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { API_KEY } from "@env";
 
@@ -54,26 +61,20 @@ export default function App() {
         // showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.weather}
       >
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
+        {days.length === 0 ? (
+          <View style={styles.day}>
+            <ActivityIndicator
+              color="white"
+              size="large"
+              style={{ marginTop: 10 }}
+            />
+          </View>
+        ) : (
+          <View style={styles.day}>
+            <Text style={styles.temp}>27</Text>
+            <Text style={styles.description}>Sunny</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
