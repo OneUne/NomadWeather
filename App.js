@@ -24,7 +24,7 @@ export default function App() {
   });
 
   const [city, setCity] = useState("Loading...");
-  const [days, setDays] = useState([]);
+  const [days, setDays] = useState({});
   const [ok, setOK] = useState(true);
 
   const now = new Date();
@@ -55,12 +55,22 @@ export default function App() {
       `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=kr`
     )
       .then((resp) => resp.json())
-      .then((data) => processCurrentData(data, locale, days, setDays))
+      .then((data) => {
+        const updatedDays = processCurrentData(data, locale, setDays);
+        fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=kr`
+        )
+          .then((resp) => resp.json())
+          .then((data) =>
+            processForecastData(data, locale, updatedDays, setDays)
+          )
+          .catch((err) => console.log(err));
+      })
       .catch((err) => console.log(err));
   };
 
   useEffect(() => {
-    if (days.length === 0) getWeather();
+    if (Object.keys(days).length === 0) getWeather();
   });
 
   if (!fontsLoaded && !fontError) {
@@ -79,7 +89,7 @@ export default function App() {
           // showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.weather}
         >
-          {days.length === 0 ? (
+          {Object.keys(days).length === 0 ? (
             <View style={styles.day}>
               <ActivityIndicator
                 color="white"
@@ -88,30 +98,30 @@ export default function App() {
               />
             </View>
           ) : (
-            days.map((day, index) => (
-              <View key={index}>
+            Object.keys(days).map((key) => (
+              <View key={key}>
                 <View style={styles.date}>
-                  <Text style={styles.dateDay}>{day.day}</Text>
-                  <Text style={styles.dateMD}>{day.md}</Text>
+                  <Text style={styles.dateDay}>{days[key].day}</Text>
+                  <Text style={styles.dateMD}>{days[key].md}</Text>
                 </View>
                 <View style={styles.horizontalLine}></View>
                 <View style={styles.day}>
-                  <Text style={styles.temp}>{day.temp}</Text>
-                  <Text style={styles.description}>{day.desc}</Text>
+                  <Text style={styles.temp}>{days[key].temp}</Text>
+                  <Text style={styles.description}>{days[key].desc}</Text>
                 </View>
                 <View style={styles.horizontalLine}></View>
                 <View style={styles.otherInfo}>
                   <View>
                     <Text style={{ fontWeight: "bold" }}>
-                      {day.temp_max} ºC
+                      {days[key].temp_max} ºC
                     </Text>
-                    <Text>{day.temp_min} ºC</Text>
+                    <Text>{days[key].temp_min} ºC</Text>
                   </View>
                   <View>
                     <Text style={{ fontWeight: "bold" }}>
-                      강수량 {day.rainfall} mm
+                      강수량 {days[key].rainfall} mm
                     </Text>
-                    <Text>풍속 {day.wind_speed} m/s</Text>
+                    <Text>풍속 {days[key].wind_speed} m/s</Text>
                   </View>
                 </View>
               </View>
